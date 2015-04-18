@@ -1,38 +1,8 @@
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-import javax.swing.JOptionPane;
-
 public class PathFinder
-{
-//	public static void main( String args[] ) throws IOException
-//	{
-//		int size = Integer.parseInt(JOptionPane.showInputDialog("Enter size of Matrix\nWarning: Larger numbers can cause stack overflows\nAnd small numbers are boring", "6"));
-//		boolean hasExit = false;
-//		Maze m;
-//		do {
-//			m = new Maze(size);
-//			System.out.println(m);
-//			m.setStart(0, 0);
-//			m.setEnd(size-1, size-1);
-//			hasExit = m.hasPath();
-//			System.out.println((hasExit ? "Exit Found":"There is no escape") + "\n");
-//			if (hasExit){
-//				//m.updateAllPaths();
-//				//System.out.println("Found " + m.pathManager.paths.size() + " paths\n");
-//				//System.out.println(m.pathManager);
-//				m.updateShortestPath();
-//				//System.out.println(m.shortestPath);
-//				System.out.println("Shortest Path:\n" + m.shortestPath + "\n" + m.shortestPath.fancyToString() + "\n\n");
-//			}
-//		}
-//		while (hasExit == false/* || (size > 2 && m.pathManager.paths.size() < 2)*/);
-//	}
-}
-
-class Maze
 {
 	/**Holds matrix*/
 	private int[][] matrix;
@@ -42,16 +12,16 @@ class Maze
 	protected Path shortestPath;
 	protected int startRow=-1, endRow=-1, startCol=-1, endCol=-1;
 
-	public Maze(int size)
+	public PathFinder(int size)
 	{
 		matrix = new int[size][size];
 		
 		for (int r =0; r < size; r++)
 			for (int c =0; c < size; c++)
-				matrix[r][c] = Math.random() > .3 ? 1:0;
+				matrix[r][c] = Math.random() > .1 ? 1:0;
 	}
 	
-	public Maze(int size, int sr, int sc, int er, int ec)
+	public PathFinder(int size, int sr, int sc, int er, int ec)
 	{
 		matrix = new int[size][size];
 		setStart(sr,sc);
@@ -59,7 +29,7 @@ class Maze
 		
 		for (int r =0; r < size; r++)
 			for (int c =0; c < size; c++)
-				matrix[r][c] = Math.random() > .0 ? 1:0;
+				matrix[r][c] = Math.random() > .5 ? 1:0;
 	}
 	
 	/**
@@ -179,12 +149,18 @@ class Maze
 		ArrayList<Path> paths = new ArrayList<Path>();
 		paths.add(new Path(new Slot(startRow, startCol)));
 		ArrayList<Path> nextGen = new ArrayList<Path>();
+		ArrayList<Slot> usedSlots = new ArrayList<Slot>();
 		shortestPath = null;
+
+		while (shortestPath == null && paths.size() != 0){
 		
-		while (shortestPath == null){
-		
+			//say(paths);
 			for (Path path : paths){
 				Slot slot = path.slots.get(path.slots.size()-1);
+				if (usedSlots.contains(slot))
+					continue;
+				else
+					usedSlots.add(slot);
 				
 				if (isAtEnd(slot)){
 					shortestPath = path;
@@ -193,74 +169,22 @@ class Maze
 					break;
 				}
 				
-				if (slot.col < matrix[slot.row].length-1 && matrix[slot.row][slot.col+1] == 1 && !path.contains(new Slot(slot.row,slot.col+1))){
+				if (slot.col < matrix[slot.row].length-1 && matrix[slot.row][slot.col+1] == 1 /*&& !path.contains(new Slot(slot.row,slot.col+1))*/){
 					Path temp = new Path(path.slots);
 					temp.add(new Slot(slot.row,slot.col+1));
 					nextGen.add(temp);
 				}
-				if (slot.row < matrix.length-1 && matrix[slot.row+1][slot.col] == 1 && !path.contains(new Slot(slot.row+1,slot.col))){
+				if (slot.row < matrix.length-1 && matrix[slot.row+1][slot.col] == 1 /*&& !path.contains(new Slot(slot.row+1,slot.col))*/){
 					Path temp = new Path(path.slots);
 					temp.add(new Slot(slot.row+1,slot.col));
 					nextGen.add(temp);
 				}
-				if (slot.row > 0 && matrix[slot.row-1][slot.col] == 1 && !path.contains(new Slot(slot.row-1,slot.col))){
+				if (slot.row > 0 && matrix[slot.row-1][slot.col] == 1 /*&& !path.contains(new Slot(slot.row-1,slot.col))*/){
 					Path temp = new Path(path.slots);
 					temp.add(new Slot(slot.row-1,slot.col));
 					nextGen.add(temp);
 				}
-				if (slot.col > 0 && matrix[slot.row][slot.col-1] == 1 && !path.contains(new Slot(slot.row,slot.col-1))){
-					Path temp = new Path(path.slots);
-					temp.add(new Slot(slot.row,slot.col-1));
-					nextGen.add(temp);
-				}
-			}
-			paths = new ArrayList<Path>(nextGen);
-			nextGen.clear();
-		}
-		
-	}
-	
-	public void updateShortestPath2(){
-		
-		start = System.nanoTime();
-		ArrayList<Path> paths = new ArrayList<Path>();
-		paths.add(new Path(new Slot(startRow, startCol)));
-		ArrayList<Path> nextGen = new ArrayList<Path>();
-		shortestPath = null;
-//		int cutOff = Math.max(matrix.length, matrix[0].length);
-		
-		while (shortestPath == null || paths.size() == 0){
-		
-			say(paths);
-			for (Path path : paths){
-				
-//				if (path.getSize() > cutOff)
-//					continue;
-				Slot slot = path.slots.get(path.slots.size()-1);
-				
-				if (isAtEnd(slot)){
-					shortestPath = path;
-					say("----Made it! ----" + shortestPath);
-					say("It took: " + (System.nanoTime() - start)/1000000000.0 + " seconds");
-					break;
-				}
-				
-				if (slot.col < matrix[slot.row].length-1 && matrix[slot.row][slot.col+1] == 1 && !path.contains(new Slot(slot.row,slot.col+1))){
-					Path temp = new Path(path.slots);
-					temp.add(new Slot(slot.row,slot.col+1));
-					nextGen.add(temp);
-				}
-				if (slot.row < matrix.length-1 && matrix[slot.row+1][slot.col] == 1 && !path.contains(new Slot(slot.row+1,slot.col))){
-					Path temp = new Path(path.slots);
-					temp.add(new Slot(slot.row+1,slot.col));
-					nextGen.add(temp);
-				}
-				if (slot.row > 0 && matrix[slot.row-1][slot.col] == 1 && !path.contains(new Slot(slot.row-1,slot.col))){
-					Path temp = new Path(path.slots);
-					temp.add(new Slot(slot.row-1,slot.col));
-					nextGen.add(temp);
-				}
-				if (slot.col > 0 && matrix[slot.row][slot.col-1] == 1 && !path.contains(new Slot(slot.row,slot.col-1))){
+				if (slot.col > 0 && matrix[slot.row][slot.col-1] == 1 /*&& !path.contains(new Slot(slot.row,slot.col-1))*/){
 					Path temp = new Path(path.slots);
 					temp.add(new Slot(slot.row,slot.col-1));
 					nextGen.add(temp);
@@ -380,6 +304,8 @@ class Path implements Comparable<Path>{
 		int x=0;
 		for (Slot slot : slots){
 			matrix[slot.row][slot.col] = ++x;
+			if (x > 122-48)
+				x=0;
 		}
 		
 		String out = "";
